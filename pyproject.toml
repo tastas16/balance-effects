@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "balance-effects"
+version = "0.1.0"
+description = ""
+authors = ["Tasio Roncal <roncal.73162@e.unvarra.es>", "Javier Granda <roncal.73162@e.unvarra.es>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = ""
+xgboost = ""
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
