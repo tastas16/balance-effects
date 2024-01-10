@@ -83,3 +83,5 @@ for i, ratio in enumerate(ratios):
     ax.text(0.5, -0.1, f'Accuracy: {accuracy_ratio:.2f}', size=12, ha="center", transform=ax.transAxes)
 plt.tight_layout()
 plt.show()
+
+#Si ves esto significa que funciono
