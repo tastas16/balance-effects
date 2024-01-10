@@ -84,3 +84,7 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
+## Prueba de configuracion git
+## Exitos
+
+
