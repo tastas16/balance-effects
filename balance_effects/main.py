@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Step 1: Load the CSV file
-data = pd.read_csv('balance_effects/resources/fetal_health.csv')
+data = pd.read_csv('resources/fetal_health.csv')
 #sns.pairplot(data=data, hue="fetal_health")
 
 # Drop irrelevant columns
@@ -25,12 +25,12 @@ y = data.iloc[:, -1]   # Target variable
 
 # Step 3: Load a pre-trained model or train a new one
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+X_train, X_test_original, y_train, y_test_original = train_test_split(X, y, test_size=0.3, random_state=42)
 model = RandomForestClassifier(n_estimators=100, random_state=42)  # Using RandomForestClassifier
 model.fit(X_train, y_train)
-predictions = model.predict(X_test)
-accuracy = accuracy_score(y_test, predictions)
-conf_matrix = confusion_matrix(y_test, predictions)
+predictions = model.predict(X_test_original)
+accuracy = accuracy_score(y_test_original, predictions)
+conf_matrix = confusion_matrix(y_test_original, predictions)
 sns.heatmap(conf_matrix, annot=True, fmt='d')
 plt.title(f'Confusion Matrix\nAccuracy: {accuracy:.2f}')
 plt.show()
@@ -56,9 +56,9 @@ y_imbalanced = data_imbalanced.iloc[:, -1]   # Target variable
 # Train the model with the imbalanced data
 X_train, X_test, y_train, y_test = train_test_split(X_imbalanced, y_imbalanced, test_size=0.3, random_state=42)
 model.fit(X_train, y_train)
-predictions = model.predict(X_test)
-accuracy_imbalanced = accuracy_score(y_test, predictions)
-conf_matrix = confusion_matrix(y_test, predictions)
+predictions = model.predict(X_test_original)
+accuracy_imbalanced = accuracy_score(y_test_original, predictions)
+conf_matrix = confusion_matrix(y_test_original, predictions)
 sns.heatmap(conf_matrix, annot=True, fmt='d')
 plt.title(f'Confusion Matrix with imbalanced data\nAccuracy: {accuracy_imbalanced:.2f}')
 plt.show()
@@ -74,9 +74,9 @@ for i, ratio in enumerate(ratios):
     y_imbalanced = data_imbalanced.iloc[:, -1]   # Target variable
     X_train, X_test, y_train, y_test = train_test_split(X_imbalanced, y_imbalanced, test_size=0.2, random_state=42)
     model.fit(X_train, y_train)
-    predictions = model.predict(X_test)
-    accuracy_ratio = accuracy_score(y_test, predictions)
-    conf_matrix = confusion_matrix(y_test, predictions)
+    predictions = model.predict(X_test_original)
+    accuracy_ratio = accuracy_score(y_test_original, predictions)
+    conf_matrix = confusion_matrix(y_test_original, predictions)
     ax = axs[i//2, i%2]
     sns.heatmap(conf_matrix, annot=True, fmt='d', ax=ax)
     ax.set_title(f'Confusion Matrix with {ratio*100}% of class 2 and class 3')
@@ -84,3 +84,9 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
+
+# Posibilidad de cambiar el random_state para comprobar mejor el efecto del diezmado de muestras.
+# Mejorar graficado de los resultados
+# Cuantificar el impacto del diezmado en la accuracy
+# Regerar el dataset a partir del conjunto de datos diezmado ya sea duplicando muestras o con una LLM
+# Explorar otro dataset si da tiempo
