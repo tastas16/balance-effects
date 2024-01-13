@@ -4,6 +4,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+import openai
+from openai import OpenAI
+from pprint import pprint
+
+import json
+
 
 # Step 1: Load the CSV file
 data = pd.read_csv('resources/fetal_health.csv')
@@ -90,3 +96,59 @@ plt.show()
 # Cuantificar el impacto del diezmado en la accuracy
 # Regerar el dataset a partir del conjunto de datos diezmado ya sea duplicando muestras o con una LLM
 # Explorar otro dataset si da tiempo
+
+
+# This can't be done for free
+"""
+df = pd.read_csv('resources/fetal_health.csv')
+
+with open('resources/openAI_key.json') as f:
+    json_data = json.load(f)
+    pprint(json_data['API_key'])
+    client = OpenAI(api_key=json_data['API_key'])
+
+system_message = " \
+You are an intelligent health data generative AI model assistant design to output JSON. \
+You are to create new data points for Fetal Health Classification dataset. \
+This dataset contains records of features extracted from Cardiotocogram exams, \
+which were then classified by three expert obstetritians into 3 classes (fetal_health field): Normal (0), Suspect (1), Pathological(2)"
+
+
+
+
+# Function to generate data using OpenAI's GPT
+def generate_data(batch, n):
+    try:
+        prompt =  system_message + "Given these data points:\n\n" + "\n".join(batch) + f"\n\nGenerate {n} similar data points:"
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo-1106",
+            response_format={ "type": "json_object" },
+            messages=[
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": prompt}
+            ]
+            )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+
+# Prepare batches of data points
+batch_size = 40  # Number of data points to send in each request
+batches = [df[i:i + batch_size].to_json(orient='records') for i in range(0, df.shape[0], batch_size)]
+
+# Iterate over batches and generate data
+generated_data = []
+for batch in batches:
+    new_data_point = generate_data(str(json.loads(batch)), 10)
+    if new_data_point:
+        generated_data.append(json.loads(new_data_point))
+
+# Convert the generated data to a DataFrame
+generated_df = pd.DataFrame(generated_data)
+
+# Save the generated data to a new CSV file
+generated_df.to_csv('generated_data.csv', index=False)
+
+print("Data generation complete. Check the generated_data.csv file.")
+"""
