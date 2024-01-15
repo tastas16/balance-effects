@@ -35,10 +35,10 @@ X_train, X_test_original, y_train, y_test_original = train_test_split(X, y, test
 model = RandomForestClassifier(n_estimators=100, random_state=42)  # Using RandomForestClassifier
 model.fit(X_train, y_train)
 predictions = model.predict(X_test_original)
-accuracy = accuracy_score(y_test_original, predictions)
+accuracy_original = accuracy_score(y_test_original, predictions)
 conf_matrix = confusion_matrix(y_test_original, predictions)
 sns.heatmap(conf_matrix, annot=True, fmt='d')
-plt.title(f'Confusion Matrix\nAccuracy: {accuracy:.2f}')
+plt.title(f'Confusion Matrix\nAccuracy: {accuracy_original:.2f}')
 plt.show()
 
 #Comment results and point out the importance of reducing false negatives
@@ -71,7 +71,14 @@ plt.show()
 
 # Repeat the process with different imbalance ratios
 fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+accuracy_ratio_v = []
 ratios = [0.4, 0.3, 0.2, 0.1]
+
+######## En las siguientes lineas de codigo la intención es generar un desbalanceo de las clases 2 y 3
+##### Estas clases son las que contienen menor cantidad de datos, razón por la cual se desea evaluar la variación
+#### En la precisión con un data set totalmente desbalanceado
+#### Esto se hace con un random_state estatico de 42, todo esto se grafica en una matriz de confusión para cada porcentaje de datos usados
+
 for i, ratio in enumerate(ratios):
     class_2 = data[data['fetal_health'] == 2].sample(frac=ratio, random_state=42)
     class_3 = data[data['fetal_health'] == 3].sample(frac=ratio, random_state=42)
@@ -83,6 +90,7 @@ for i, ratio in enumerate(ratios):
     predictions = model.predict(X_test_original)
     accuracy_ratio = accuracy_score(y_test_original, predictions)
     conf_matrix = confusion_matrix(y_test_original, predictions)
+    accuracy_ratio_v.append(accuracy_ratio)
     ax = axs[i//2, i%2]
     sns.heatmap(conf_matrix, annot=True, fmt='d', ax=ax)
     ax.set_title(f'Confusion Matrix with {ratio*100}% of class 2 and class 3')
@@ -90,65 +98,77 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
+##############################
 
-# Posibilidad de cambiar el random_state para comprobar mejor el efecto del diezmado de muestras.
-# Mejorar graficado de los resultados
-# Cuantificar el impacto del diezmado en la accuracy
-# Regerar el dataset a partir del conjunto de datos diezmado ya sea duplicando muestras o con una LLM
-# Explorar otro dataset si da tiempo
+ratios_percent = [ratio * 100 for ratio in ratios]
+accuracy_percentages = [accuracy_ratio_v * 100 for accuracy_ratio_v in accuracy_ratio_v]
+accuracy_original_percentage = accuracy_original * 100
 
+############ En esta grafica se quiere observar la variación de la precisión entre un entrenamiento pseudobalanceado (original)
+##### Y un dataset desbalanceado completamente
 
-# This can't be done for free
-"""
-df = pd.read_csv('resources/fetal_health.csv')
-
-with open('resources/openAI_key.json') as f:
-    json_data = json.load(f)
-    pprint(json_data['API_key'])
-    client = OpenAI(api_key=json_data['API_key'])
-
-system_message = " \
-You are an intelligent health data generative AI model assistant design to output JSON. \
-You are to create new data points for Fetal Health Classification dataset. \
-This dataset contains records of features extracted from Cardiotocogram exams, \
-which were then classified by three expert obstetritians into 3 classes (fetal_health field): Normal (0), Suspect (1), Pathological(2)"
+plt.figure(figsize=(8, 6))
+plt.plot(ratios_percent, accuracy_percentages, marker='o', label='Precisión con Datos Desbalanceados')
+plt.axhline(y=accuracy_original_percentage, color='r', linestyle='--', label='Precisión Sin Desbalanceo')
+plt.title('Precisión en función del porcentaje de datos usados')
+plt.xlabel('Porcentaje de datos usados (%)')
+plt.ylabel('Precisión (%)')
+plt.xticks(ratios_percent)  # Asegura que solo se muestren los porcentajes de ratios en el eje x
+plt.legend()
+plt.show()
+############
+###############
 
 
+##### En las siguientes lineas de codigo se pretende ver la diferencia en la precisión variando los random state y el porcentaje de datos empleados
 
+random_stateV = [20, 40, 60, 80]
+accuracy_ratioV = []
 
-# Function to generate data using OpenAI's GPT
-def generate_data(batch, n):
-    try:
-        prompt =  system_message + "Given these data points:\n\n" + "\n".join(batch) + f"\n\nGenerate {n} similar data points:"
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo-1106",
-            response_format={ "type": "json_object" },
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": prompt}
-            ]
-            )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        return None
+# Inicializar un diccionario para almacenar las precisiones para cada random_state
+accuracy_ratios_by_random_state = {rs: [] for rs in random_stateV}
 
-# Prepare batches of data points
-batch_size = 40  # Number of data points to send in each request
-batches = [df[i:i + batch_size].to_json(orient='records') for i in range(0, df.shape[0], batch_size)]
+fig, axs = plt.subplots(len(ratios), len(random_stateV), figsize=(15, 15))
 
-# Iterate over batches and generate data
-generated_data = []
-for batch in batches:
-    new_data_point = generate_data(str(json.loads(batch)), 10)
-    if new_data_point:
-        generated_data.append(json.loads(new_data_point))
+for i, ratio in enumerate(ratios):
+    for j, random_state in enumerate(random_stateV):
+        class_2 = data[data['fetal_health'] == 2].sample(frac=ratio, random_state=random_state)
+        class_3 = data[data['fetal_health'] == 3].sample(frac=ratio, random_state=random_state)
+        data_imbalanced = pd.concat([class_1, class_2, class_3])
+        X_imbalanced = data_imbalanced.iloc[:, :-1]  # Features
+        y_imbalanced = data_imbalanced.iloc[:, -1]   # Target variable
+        X_train, X_test, y_train, y_test = train_test_split(X_imbalanced, y_imbalanced, test_size=0.2, random_state=random_state)
+        model.fit(X_train, y_train)
+        predictions = model.predict(X_test_original)
+        accuracy_ratio = accuracy_score(y_test_original, predictions)
+        conf_matrix = confusion_matrix(y_test_original, predictions)
+        accuracy_ratioV.append(accuracy_ratio)
+        accuracy_ratios_by_random_state[random_state].append(accuracy_ratio)
+        ax = axs[i, j]
+        sns.heatmap(conf_matrix, annot=True, fmt='d', ax=ax)
+        ax.set_title(f'CM con {ratio*100}% clase 2 y 3, RS {random_state}')
+        ax.text(0.5, -0.1, f'Precisión: {accuracy_ratio:.2f}%', size=12, ha="center", transform=ax.transAxes)
 
-# Convert the generated data to a DataFrame
-generated_df = pd.DataFrame(generated_data)
+plt.tight_layout()
+plt.show()
 
-# Save the generated data to a new CSV file
-generated_df.to_csv('generated_data.csv', index=False)
+# Graficar las líneas para cada random_state
+plt.figure(figsize=(10, 6))
+for random_state, accuracies in accuracy_ratios_by_random_state.items():
+    accuracies_percent = [accuracy * 100 for accuracy in accuracies]
+    plt.plot(ratios_percent, accuracies_percent, marker='o', label=f'RS {random_state}')
 
-print("Data generation complete. Check the generated_data.csv file.")
-"""
+plt.title('Precisión en función del porcentaje de datos usados para diferentes random_state')
+plt.xlabel('Porcentaje de datos usados (%)')
+plt.ylabel('Precisión (%)')
+plt.xticks(ratios_percent)
+plt.legend()
+plt.grid(True)
+plt.show()
+
+### Como es posible observar la reducción de muestras para las categorias minoritarias impacta en la precision del modelo
+### La elección del random state con ratios muy pequeños puede tener un impacto no despreciable en la precisión del modelo.
+### La naturaleza aleatoria en la eleccion de las muestra puede llevar a elecciones representativas o no de las muestras
+### Esta eleccion del random state deja de tener importancia a ratios mayores
+### Aun partiendo de un dataset pseudo balanceado podemos considerar la prediccion del modelo como aceptable al alcanzar una precision del 95%
+### En el mejor modelo hay 18 casos + 2 casos + 1 casos falsos negativos, que sería recomendable evitar
