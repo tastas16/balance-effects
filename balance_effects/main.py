@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # Step 1: Load the CSV file
-data = pd.read_csv('balance_effects/resources/fetal_health.csv')
+data = pd.read_csv('resources/fetal_health.csv')
 #sns.pairplot(data=data, hue="fetal_health")
 
 # Drop irrelevant columns
@@ -67,6 +67,12 @@ plt.show()
 fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 accuracy_ratio_v = []
 ratios = [0.4, 0.3, 0.2, 0.1]
+
+######## En las siguientes lineas de codigo la intención es generar un desbalanceo de las clases 2 y 3
+##### Estas clases son las que contienen menor cantidad de datos, razón por la cual se desea evaluar la variación 
+#### En la precisión con un data set totalmente desbalanceado
+#### Esto se hace con un random_state estatico de 42, todo esto se grafica en una matriz de confusión para cada porcentaje de desbalance 
+
 for i, ratio in enumerate(ratios):
     class_2 = data[data['fetal_health'] == 2].sample(frac=ratio, random_state=42)
     class_3 = data[data['fetal_health'] == 3].sample(frac=ratio, random_state=42)
@@ -86,8 +92,39 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
+##############################
+
+ratios_percent = [ratio * 100 for ratio in ratios]
+accuracy_percentages = [accuracy_ratio_v * 100 for accuracy_ratio_v in accuracy_ratio_v]
+accuracy_original_percentage = accuracy_original * 100
+
+############ En esta grafica se quiere observar la variación de la precisión entre un entrenamiento pseudobalanceado (original) 
+# Y un dataset desbalanceado completamente
+
+plt.figure(figsize=(8, 6))
+plt.plot(ratios_percent, accuracy_percentages, marker='o', label='Precisión con Datos Desbalanceados')
+plt.axhline(y=accuracy_original_percentage, color='r', linestyle='--', label='Precisión Sin Desbalanceo')
+plt.title('Precisión en función del porcentaje de datos usados')
+plt.xlabel('Porcentaje de datos usados (%)')
+plt.ylabel('Precisión (%)')
+plt.xticks(ratios_percent)  # Asegura que solo se muestren los porcentajes de ratios en el eje x
+plt.legend()
+plt.show()
+############
+
+
+############### 
+##### En las siguientes lineas de codigo se pretende ver la diferencia en la precisión variando los random state y el porcentaje de datos empleados
+##### Es así que vamos a obtener por ejemplo la precisión para los random state "20,40,60,80" y un porcentaje de datos empleados del 20%
+#### Esto con el fin de evidenciar la variación de la precicisión si sometemos el modelo a una variación de estos parametros
+#### Para apreciar graficamente, se decidio realizar una grafica con las diferentes matrices de confusión con los diferentes porcentajes de datos empleados
+#### Y con los diferentes random state, además se realizó una grafica de lineas que muestra la variación de la precisión con los diferentes parametros.
+
 random_stateV = [20, 40, 60, 80]
 accuracy_ratioV = []
+
+# Inicializar un diccionario para almacenar las precisiones para cada random_state
+accuracy_ratios_by_random_state = {rs: [] for rs in random_stateV}
 
 fig, axs = plt.subplots(len(ratios), len(random_stateV), figsize=(15, 15))
 
@@ -104,6 +141,7 @@ for i, ratio in enumerate(ratios):
         accuracy_ratio = accuracy_score(y_test_original, predictions)
         conf_matrix = confusion_matrix(y_test_original, predictions)
         accuracy_ratioV.append(accuracy_ratio)
+        accuracy_ratios_by_random_state[random_state].append(accuracy_ratio)
         ax = axs[i, j]
         sns.heatmap(conf_matrix, annot=True, fmt='d', ax=ax)
         ax.set_title(f'CM con {ratio*100}% clase 2 y 3, RS {random_state}')
@@ -112,42 +150,6 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
-ratios_percent = [ratio * 100 for ratio in ratios]
-accuracy_percentages = [accuracy_ratio_v * 100 for accuracy_ratio_v in accuracy_ratio_v]
-accuracy_original_percentage = accuracy_original * 100
-
-plt.figure(figsize=(8, 6))
-plt.plot(ratios_percent, accuracy_percentages, marker='o', label='Precisión con Datos Desbalanceados')
-# Añadir la línea de precisión original
-plt.axhline(y=accuracy_original_percentage, color='r', linestyle='--', label='Precisión Sin Desbalanceo')
-plt.title('Precisión en función del porcentaje de desbalance')
-plt.xlabel('Porcentaje de desbalance (%)')
-plt.ylabel('Precisión (%)')
-plt.xticks(ratios_percent)  # Asegura que solo se muestren los porcentajes de ratios en el eje x
-plt.legend()
-plt.show()
-
-
-# Inicializar un diccionario para almacenar las precisiones para cada random_state
-accuracy_ratios_by_random_state = {rs: [] for rs in random_stateV}
-
-# Iterar sobre cada combinación de ratio y random_state para calcular la precisión
-for ratio in ratios:
-    for random_state in random_stateV:
-        class_2 = data[data['fetal_health'] == 2].sample(frac=ratio, random_state=random_state)
-        class_3 = data[data['fetal_health'] == 3].sample(frac=ratio, random_state=random_state)
-        data_imbalanced = pd.concat([class_1, class_2, class_3])
-        X_imbalanced = data_imbalanced.iloc[:, :-1]  # Features
-        y_imbalanced = data_imbalanced.iloc[:, -1]   # Target variable
-        X_train, X_test, y_train, y_test = train_test_split(X_imbalanced, y_imbalanced, test_size=0.2, random_state=random_state)
-        model.fit(X_train, y_train)
-        predictions = model.predict(X_test_original)
-        accuracy_ratio = accuracy_score(y_test_original, predictions)
-        accuracy_ratios_by_random_state[random_state].append(accuracy_ratio)
-
-# Convertir los ratios a porcentajes para el eje x
-ratios_percent = [ratio * 100 for ratio in ratios]
-
 # Graficar las líneas para cada random_state
 plt.figure(figsize=(10, 6))
 for random_state, accuracies in accuracy_ratios_by_random_state.items():
@@ -155,16 +157,11 @@ for random_state, accuracies in accuracy_ratios_by_random_state.items():
     accuracies_percent = [accuracy * 100 for accuracy in accuracies]
     plt.plot(ratios_percent, accuracies_percent, marker='o', label=f'RS {random_state}')
 
-# Añadir detalles al gráfico
-plt.title('Precisión en función del ratio de desbalance para diferentes random_state')
-plt.xlabel('Ratio de desbalance (%)')
+
+plt.title('Precisión en función del porcentaje de datos usados para diferentes random_state')
+plt.xlabel('Porcentaje de datos usados (%)')
 plt.ylabel('Precisión (%)')
 plt.xticks(ratios_percent)
 plt.legend()
 plt.grid(True)
 plt.show()
-# Posibilidad de cambiar el random_state para comprobar mejor el efecto del diezmado de muestras.
-# Mejorar graficado de los resultados
-# Cuantificar el impacto del diezmado en la accuracy
-# Regerar el dataset a partir del conjunto de datos diezmado ya sea duplicando muestras o con una LLM
-# Explorar otro dataset si da tiempo
