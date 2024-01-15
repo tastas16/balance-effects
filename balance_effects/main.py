@@ -150,6 +150,9 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
+######## En la siguiente grafica se muestran las variaciones que se obtuvieron al tener diferentes random state y diferente porcentaje de datos empleados
+######  Con esto es posible apreciar que si tenemos un porcentaje de datos empleados muy bajo es mejor usar un random state alto, pero esta diferencia se 
+######  Va disminuyendo cuando nuestro porcentaje de datos va aumentando, es decir que a mayor porcentaje de datos empleados el random state no es tan relevante.
 # Graficar las líneas para cada random_state
 plt.figure(figsize=(10, 6))
 for random_state, accuracies in accuracy_ratios_by_random_state.items():
