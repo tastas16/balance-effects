@@ -4,6 +4,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+import openai
+from openai import OpenAI
+from pprint import pprint
+
+import json
+
 
 # Step 1: Load the CSV file
 data = pd.read_csv('resources/fetal_health.csv')
