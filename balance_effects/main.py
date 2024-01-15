@@ -69,9 +69,9 @@ accuracy_ratio_v = []
 ratios = [0.4, 0.3, 0.2, 0.1]
 
 ######## En las siguientes lineas de codigo la intención es generar un desbalanceo de las clases 2 y 3
-##### Estas clases son las que contienen menor cantidad de datos, razón por la cual se desea evaluar la variación 
+##### Estas clases son las que contienen menor cantidad de datos, razón por la cual se desea evaluar la variación
 #### En la precisión con un data set totalmente desbalanceado
-#### Esto se hace con un random_state estatico de 42, todo esto se grafica en una matriz de confusión para cada porcentaje de desbalance 
+#### Esto se hace con un random_state estatico de 42, todo esto se grafica en una matriz de confusión para cada porcentaje de datos usados
 
 for i, ratio in enumerate(ratios):
     class_2 = data[data['fetal_health'] == 2].sample(frac=ratio, random_state=42)
@@ -98,8 +98,8 @@ ratios_percent = [ratio * 100 for ratio in ratios]
 accuracy_percentages = [accuracy_ratio_v * 100 for accuracy_ratio_v in accuracy_ratio_v]
 accuracy_original_percentage = accuracy_original * 100
 
-############ En esta grafica se quiere observar la variación de la precisión entre un entrenamiento pseudobalanceado (original) 
-# Y un dataset desbalanceado completamente
+############ En esta grafica se quiere observar la variación de la precisión entre un entrenamiento pseudobalanceado (original)
+##### Y un dataset desbalanceado completamente
 
 plt.figure(figsize=(8, 6))
 plt.plot(ratios_percent, accuracy_percentages, marker='o', label='Precisión con Datos Desbalanceados')
@@ -111,14 +111,10 @@ plt.xticks(ratios_percent)  # Asegura que solo se muestren los porcentajes de ra
 plt.legend()
 plt.show()
 ############
+###############
 
 
-############### 
 ##### En las siguientes lineas de codigo se pretende ver la diferencia en la precisión variando los random state y el porcentaje de datos empleados
-##### Es así que vamos a obtener por ejemplo la precisión para los random state "20,40,60,80" y un porcentaje de datos empleados del 20%
-#### Esto con el fin de evidenciar la variación de la precicisión si sometemos el modelo a una variación de estos parametros
-#### Para apreciar graficamente, se decidio realizar una grafica con las diferentes matrices de confusión con los diferentes porcentajes de datos empleados
-#### Y con los diferentes random state, además se realizó una grafica de lineas que muestra la variación de la precisión con los diferentes parametros.
 
 random_stateV = [20, 40, 60, 80]
 accuracy_ratioV = []
@@ -150,16 +146,11 @@ for i, ratio in enumerate(ratios):
 plt.tight_layout()
 plt.show()
 
-######## En la siguiente grafica se muestran las variaciones que se obtuvieron al tener diferentes random state y diferente porcentaje de datos empleados
-######  Con esto es posible apreciar que si tenemos un porcentaje de datos empleados muy bajo es mejor usar un random state alto, pero esta diferencia se 
-######  Va disminuyendo cuando nuestro porcentaje de datos va aumentando, es decir que a mayor porcentaje de datos empleados el random state no es tan relevante.
 # Graficar las líneas para cada random_state
 plt.figure(figsize=(10, 6))
 for random_state, accuracies in accuracy_ratios_by_random_state.items():
-    # Convertir las precisiones a porcentajes
     accuracies_percent = [accuracy * 100 for accuracy in accuracies]
     plt.plot(ratios_percent, accuracies_percent, marker='o', label=f'RS {random_state}')
-
 
 plt.title('Precisión en función del porcentaje de datos usados para diferentes random_state')
 plt.xlabel('Porcentaje de datos usados (%)')
@@ -168,3 +159,10 @@ plt.xticks(ratios_percent)
 plt.legend()
 plt.grid(True)
 plt.show()
+
+### Como es posible observar la reducción de muestras para las categorias minoritarias impacta en la precision del modelo
+### La elección del random state con ratios muy pequeños puede tener un impacto no despreciable en la precisión del modelo.
+### La naturaleza aleatoria en la eleccion de las muestra puede llevar a elecciones representativas o no de las muestras
+### Esta eleccion del random state deja de tener importancia a ratios mayores
+### Aun partiendo de un dataset pseudo balanceado podemos considerar la prediccion del modelo como aceptable al alcanzar una precision del 95%
+### En el mejor modelo hay 18 casos + 2 casos + 1 casos falsos negativos, que sería recomendable evitar
