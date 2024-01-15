@@ -4,35 +4,30 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
-import openai
-from openai import OpenAI
-from pprint import pprint
-
-import json
 
 
-# Step 1: Load the CSV file
+# Cargar CSV
 data = pd.read_csv('resources/fetal_health.csv')
-#sns.pairplot(data=data, hue="fetal_health")
+#sns.pairplot(data=data, hue="fetal_health") to see the correlation between the features
 
-# Drop irrelevant columns
+# Eliminar columnas que no aportan mucha información siguiendo un análisis visual de la correlación entre las variables
 data = data.drop(["severe_decelerations", "histogram_tendency"], axis=1)
 
-# Show distribution by target variables of data
+# Graficar disribución de los datos
 plt.figure(figsize=(8,6))
 sns.countplot(x='fetal_health', data=data)
 plt.title('Distribution by Target Variables')
 plt.show()
 
 
-# Step 2: Preprocess the data
+# Preporcesamiento de los datos
 X = data.iloc[:, :-1]  # Features
 y = data.iloc[:, -1]   # Target variable
 
-# Step 3: Load a pre-trained model or train a new one
+# Utilizar modelo de Random Forest
 
 X_train, X_test_original, y_train, y_test_original = train_test_split(X, y, test_size=0.3, random_state=42)
-model = RandomForestClassifier(n_estimators=100, random_state=42)  # Using RandomForestClassifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)  #RandomForestClassifier
 model.fit(X_train, y_train)
 predictions = model.predict(X_test_original)
 accuracy_original = accuracy_score(y_test_original, predictions)
@@ -41,25 +36,24 @@ sns.heatmap(conf_matrix, annot=True, fmt='d')
 plt.title(f'Confusion Matrix\nAccuracy: {accuracy_original:.2f}')
 plt.show()
 
-#Comment results and point out the importance of reducing false negatives
 
-# Step 6: Imbalance the data and retrain the model
+# Separar los datos por clase
 class_1 = data[data['fetal_health'] == 1]
 class_2 = data[data['fetal_health'] == 2]
 class_3 = data[data['fetal_health'] == 3]
 
-# Reduce the size of class 2 and class 3
+# Reducir la cantidad de datos de las clases 2 y 3
 class_2 = class_2.sample(frac=0.65, random_state=42)
 class_3 = class_3.sample(frac=0.5, random_state=42)
 
-# Concatenate the reduced class 1 and class 2 with class 3
+# Concatenar los datos reducidos
 data_imbalanced = pd.concat([class_1, class_2, class_3])
 
-# Split the data into features and target variable
+# Separar los datos en X e y
 X_imbalanced = data_imbalanced.iloc[:, :-1]  # Features
 y_imbalanced = data_imbalanced.iloc[:, -1]   # Target variable
 
-# Train the model with the imbalanced data
+# Entrener el modelo con los datos desbalanceados
 X_train, X_test, y_train, y_test = train_test_split(X_imbalanced, y_imbalanced, test_size=0.3, random_state=42)
 model.fit(X_train, y_train)
 predictions = model.predict(X_test_original)
@@ -69,7 +63,7 @@ sns.heatmap(conf_matrix, annot=True, fmt='d')
 plt.title(f'Confusion Matrix with imbalanced data\nAccuracy: {accuracy_imbalanced:.2f}')
 plt.show()
 
-# Repeat the process with different imbalance ratios
+# Repetir el proceso de reducción  con varios ratios
 fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 accuracy_ratio_v = []
 ratios = [0.4, 0.3, 0.2, 0.1]

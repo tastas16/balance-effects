@@ -12,7 +12,11 @@ scikit-learn = "^1.3.2"
 matplotlib = "^3.8.2"
 seaborn = "^0.13.1"
 openai = "^1.7.1"
+imblearn = "^0.0"
 
+[tool.poetry.scripts]
+main = "balance_effects.main:start"
+main_t1 = "balance_effects.main_t1:start"
 
 
 [build-system]
