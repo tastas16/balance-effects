@@ -1,6 +1,6 @@
-# Project Name
+# Balance-Effects
 
-This project is about [provide a brief explanation of what the project is about].
+This project is about the trying to check how the process of umbalancing and Data Augmentation impacts the model results.
 
 ## Prerequisites
 
@@ -14,7 +14,7 @@ Before you can run this project, make sure you have the following installed:
 1. Clone the repository:
 
     ```shell
-    git clone https://github.com/your-username/project-name.git
+    git clone https://github.com/tastas16/balance-effects.git
     ```
 
 2. Install Poetry (if not already installed):
@@ -26,7 +26,7 @@ Before you can run this project, make sure you have the following installed:
 3. Navigate to the project directory:
 
     ```shell
-    cd project-name
+    cd balance-effects
     ```
 
 4. Install project dependencies using Poetry:
